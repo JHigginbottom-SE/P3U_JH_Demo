@@ -1,10 +1,15 @@
-export type IncidentType = 'accident' | 'theft' | 'fire' | 'water damage';
+export enum ClaimIncidentType {
+    ACCIDENT = 'accident',
+    THEFT = 'theft',
+    FIRE = 'fire',
+    WATER = 'water damage'
+};
 
-export interface Policy {
+export interface ClaimPolicy {
   policyId: string;
   startDate: Date;
   endDate: Date;
   deductible: number;
   coverageLimit: number;
-  coveredIncidents: IncidentType[];
+  coveredIncidents: ClaimIncidentType[];
 }
