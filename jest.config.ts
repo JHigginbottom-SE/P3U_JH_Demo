@@ -1,7 +1,9 @@
-import type {Config} from 'jest';
+import { createDefaultPreset, type JestConfigWithTsJest } from 'ts-jest'
 
-const config: Config = {
-  coverageProvider: "v8"
-};
+const presetConfig = createDefaultPreset();
 
-export default config;
+const jestConfig: JestConfigWithTsJest = {
+  ...presetConfig,
+}
+
+export default jestConfig
