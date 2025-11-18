@@ -1,5 +1,5 @@
-import { ClaimEvaluation, ClaimPolicy, DEFAULT_CLAIM_EVALUATION } from './claimDataTypes.js';
+import { ClaimEvaluation, UserClaim, UserPolicy, DEFAULT_CLAIM_EVALUATION } from './claimDataTypes.js';
 
-export function evaluateClaim(policy: ClaimPolicy): ClaimEvaluation {
+export function evaluateClaim(claim: UserClaim, policy: UserPolicy): ClaimEvaluation {
     return DEFAULT_CLAIM_EVALUATION;
 }

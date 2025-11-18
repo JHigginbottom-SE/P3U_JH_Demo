@@ -5,7 +5,14 @@ export enum ClaimIncidentType {
     WATER = 'water damage'
 };
 
-export interface ClaimPolicy {
+export interface UserClaim {
+    policyId: string;
+    incidentType: ClaimIncidentType;
+    incidentDate: Date;
+    claimAmount: number;
+}
+
+export interface UserPolicy {
   policyId: string;
   startDate: Date;
   endDate: Date;
