@@ -35,9 +35,3 @@ export interface ClaimEvaluation {
     payout: number;
     reasonCode: string;
 }
-
-export const DEFAULT_CLAIM_EVALUATION: ClaimEvaluation = {
-    approved: false,
-    payout: 0,
-    reasonCode: ClaimReasonCode.UNKNOWN_ERROR
-};
