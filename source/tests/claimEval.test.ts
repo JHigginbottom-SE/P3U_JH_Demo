@@ -99,7 +99,7 @@ describe('evaluateClaim', () => {
 
         expect(result.approved).toBe(false);
         expect(result.payout).toBe(0);
-        expect(result.reasonCode).toBe(ClaimReasonCode.NOT_COVERED);
+        expect(result.reasonCode).toBe(ClaimReasonCode.INVALID_PARAMETERS);
     });
 
     //
