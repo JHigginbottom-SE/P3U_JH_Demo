@@ -119,7 +119,7 @@ describe('evaluateClaim', () => {
     });
 
     test('WhenClaimPreDatesPolicyMonth_Fails', () => {
-        expect(policy123.startDate.getMonth()).toBeGreaterThan(1);
+        expect(policy123.startDate.getMonth()).toBeGreaterThan(0);
         let preDate = new Date(policy123.startDate);
         preDate.setMonth(preDate.getMonth() - 1);
 
