@@ -1,5 +1,5 @@
-import { ClaimEvaluation, ClaimIncidentType, UserClaim } from "./claimDataTypes";
-import { evaluateClaim } from "./claimEvaluator";
+import { ClaimEvaluation, ClaimIncidentType, UserClaim } from "./claimDataTypes.ts";
+import { evaluateClaim } from "./claimEvaluator.ts";
 
 export function processClaim(userData: any): ClaimEvaluation {
     let retval: ClaimEvaluation = {

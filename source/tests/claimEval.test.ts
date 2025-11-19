@@ -1,5 +1,5 @@
-import { UserPolicy, ClaimIncidentType, ClaimReasonCode, UserClaim } from "../claimDataTypes";
-import { evaluateClaim } from "../claimEvaluator";
+import { UserPolicy, ClaimIncidentType, ClaimReasonCode, UserClaim } from "../claimDataTypes.ts";
+import { evaluateClaim } from "../claimEvaluator.ts";
 
 let validPolicy123Claim: UserClaim | undefined;
 
