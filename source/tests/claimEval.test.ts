@@ -4,18 +4,20 @@ import { evaluateClaim } from "../claimEvaluator";
 const validPolicy123Claim = {
     policyId: 'POL123',
     incidentType: ClaimIncidentType.ACCIDENT,
-    incidentDate: new Date('2023-01-01'),
+    incidentDate: new Date('2023-06-01'),
     claimAmount: 5000
 };
 
 const policy123 = {
     policyId: 'POL123',
-    startDate: new Date('2023-01-01'),
-    endDate: new Date('2024-01-01'),
+    startDate: new Date('2023-02-05'),
+    endDate: new Date('2024-02-05'),
     deductible: 500,
     coverageLimit: 10000,
     coveredIncidents: [ClaimIncidentType.ACCIDENT, ClaimIncidentType.FIRE],
 };
+
+const expectedClaim123Payout = validPolicy123Claim.claimAmount - policy123.deductible;
 
 const validPolicy456Claim = {
     policyId: 'POL456',
@@ -98,5 +100,117 @@ describe('evaluateClaim', () => {
         expect(result.approved).toBe(false);
         expect(result.payout).toBe(0);
         expect(result.reasonCode).toBe(ClaimReasonCode.NOT_COVERED);
+    });
+
+    //
+    // Functional Tests - Claim Dates
+    //
+    test('WhenClaimPreDatesPolicyDay_Fails', () => {
+        expect(policy123.startDate.getDate()).toBeGreaterThan(1);
+        let preDate = new Date(policy123.startDate);
+        preDate.setDate(preDate.getDate() - 1);
+
+        const prePolicyClaim = { ...validPolicy123Claim, incidentDate: preDate };
+        const result = evaluateClaim(prePolicyClaim, policy123);
+
+        expect(result.approved).toBe(false);
+        expect(result.payout).toBe(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.POLICY_INACTIVE);
+    });
+
+    test('WhenClaimPreDatesPolicyMonth_Fails', () => {
+        expect(policy123.startDate.getMonth()).toBeGreaterThan(1);
+        let preDate = new Date(policy123.startDate);
+        preDate.setMonth(preDate.getMonth() - 1);
+
+        const prePolicyClaim = { ...validPolicy123Claim, incidentDate: preDate };
+        const result = evaluateClaim(prePolicyClaim, policy123);
+
+        expect(result.approved).toBe(false);
+        expect(result.payout).toBe(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.POLICY_INACTIVE);
+    });
+
+    test('WhenClaimPreDatesPolicyYear_Fails', () => {
+        let preDate = new Date(policy123.startDate);
+        preDate.setFullYear(preDate.getFullYear() - 1);
+
+        const prePolicyClaim = { ...validPolicy123Claim, incidentDate: preDate };
+        const result = evaluateClaim(prePolicyClaim, policy123);
+
+        expect(result.approved).toBe(false);
+        expect(result.payout).toBe(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.POLICY_INACTIVE);
+    });
+
+    test('WhenClaimMatchesPolicyStartDate_Succeeds', () => {
+        // Note: would clarify if hour/minute/second granularity matters here. Does time zone matter?
+        const claimOnStartDate = { ...validPolicy123Claim, incidentDate: policy123.startDate };
+        const result = evaluateClaim(claimOnStartDate, policy123);
+
+        expect(result.approved).toBe(true);
+        expect(result.payout).toBeGreaterThan(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.APPROVED);
+    });
+
+    test('WhenClaimPrecedesPolicyEndDate_Succeeds', () => {
+        expect(policy123.endDate.getDate()).toBeGreaterThan(1);
+        let preDate = new Date(policy123.endDate);
+        preDate.setDate(preDate.getDate() - 1);
+
+        const claim = { ...validPolicy123Claim, incidentDate: preDate };
+        const result = evaluateClaim(claim, policy123);
+
+        expect(result.approved).toBe(true);
+        expect(result.payout).toBeGreaterThan(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.APPROVED);
+    });
+
+    test('WhenClaimMatchesPolicyEndDate_Fails', () => {
+        const claimOnEndDate = { ...validPolicy123Claim, incidentDate: policy123.endDate };
+        const result = evaluateClaim(claimOnEndDate, policy123);
+
+        expect(result.approved).toBe(false);
+        expect(result.payout).toBe(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.POLICY_INACTIVE);
+    });
+
+    test('WhenClaimPostDatesPolicyEndDate_Fails', () => {
+        // Note: would clarify if hour/minute/second granularity matters here. Does time zone matter?
+        expect(policy123.endDate.getDate()).toBeLessThan(28);
+        let postDate = new Date(policy123.endDate);
+        postDate.setDate(postDate.getDate() + 1);
+
+        const postPolicyClaim = { ...validPolicy123Claim, incidentDate: postDate };
+        const result = evaluateClaim(postPolicyClaim, policy123);
+
+        expect(result.approved).toBe(false);
+        expect(result.payout).toBe(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.POLICY_INACTIVE);
+    });
+
+    test('WhenClaimPostDatesPolicyMonth_Fails', () => {
+        expect(policy123.endDate.getMonth()).toBeLessThan(11);
+        let postDate = new Date(policy123.endDate);
+        postDate.setMonth(postDate.getMonth() + 1);
+
+        const postPolicyClaim = { ...validPolicy123Claim, incidentDate: postDate };
+        const result = evaluateClaim(postPolicyClaim, policy123);
+
+        expect(result.approved).toBe(false);
+        expect(result.payout).toBe(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.POLICY_INACTIVE);
+    });
+
+    test('WhenClaimPostDatesPolicyYear_Fails', () => {
+        let postDate = new Date(policy123.endDate);
+        postDate.setFullYear(postDate.getFullYear() + 1);
+
+        const postPolicyClaim = { ...validPolicy123Claim, incidentDate: postDate };
+        const result = evaluateClaim(postPolicyClaim, policy123);
+
+        expect(result.approved).toBe(false);
+        expect(result.payout).toBe(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.POLICY_INACTIVE);
     });
 });
