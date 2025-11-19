@@ -213,4 +213,105 @@ describe('evaluateClaim', () => {
         expect(result.payout).toBe(0);
         expect(result.reasonCode).toBe(ClaimReasonCode.POLICY_INACTIVE);
     });
+
+    //
+    // Functional Tests - Incident Types
+    //
+    test('WhenClaimIncidentNotCovered_Fails', () => {
+        // Ensure test updates automatically if incident types are changed
+        const incidentList = Object.keys(ClaimIncidentType).map((key) => ClaimIncidentType[key as keyof typeof ClaimIncidentType]);
+        const numCovered = incidentList.length;
+        expect(numCovered).toBeGreaterThan(0);
+
+        // Try to root out any order dependencies by cycling through the list
+        for (let ii=0; ii < numCovered; ii++) {
+            const claimIncident = incidentList.pop()!;
+
+            const uncoveredClaim = { ...validPolicy123Claim, incidentType: claimIncident };
+            const uncoveredPolicy = { ...policy123, coveredIncidents: incidentList };
+            const result = evaluateClaim(uncoveredClaim, uncoveredPolicy);
+
+            expect(result.approved).toBe(false);
+            expect(result.payout).toBe(0);
+            expect(result.reasonCode).toBe(ClaimReasonCode.NOT_COVERED);
+
+            incidentList.unshift(claimIncident);
+        }
+    });
+
+    test('WhenClaimIncidentCovered_Succeeds', () => {
+        // Ensure test updates automatically if incident types are changed
+        const incidentList = Object.keys(ClaimIncidentType).map((key) => ClaimIncidentType[key as keyof typeof ClaimIncidentType]);
+        const numCovered = incidentList.length;
+        expect(numCovered).toBeGreaterThan(0);
+
+        // Try to root out any order dependencies by cycling through the list
+        for (let ii=0; ii < numCovered; ii++) {
+            const coveredClaimIncident = incidentList[0];
+            const coveredClaim = { ...validPolicy123Claim, incidentType: coveredClaimIncident };
+            const coveredPolicy = { ...policy123, coveredIncidents: incidentList };
+            const result = evaluateClaim(coveredClaim, coveredPolicy);
+
+            expect(result.approved).toBe(true);
+            expect(result.payout).toBeGreaterThan(0);
+            expect(result.reasonCode).toBe(ClaimReasonCode.APPROVED);
+
+            incidentList.unshift(incidentList.pop()!);
+        }
+    });
+
+    //
+    // Functional Tests - Payout Calculations
+    //
+    test('WhenClaimBelowDeductible_ZeroPayout_Fails', () => {
+        expect(policy123.deductible).toBeGreaterThan(0);
+        const claim = { ...validPolicy123Claim, claimAmount: policy123.deductible - 1 };
+        const result = evaluateClaim(claim, policy123);
+
+        expect(result.approved).toBe(false);
+        expect(result.payout).toBe(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.ZERO_PAYOUT);
+    });
+
+    test('WhenClaimEqualsDeductible_ZeroPayout_Fails', () => {
+        expect(policy123.deductible).toBeGreaterThan(0);
+        const claim = { ...validPolicy123Claim, claimAmount: policy123.deductible };
+        const result = evaluateClaim(claim, policy123);
+
+        expect(result.approved).toBe(false);
+        expect(result.payout).toBe(0);
+        expect(result.reasonCode).toBe(ClaimReasonCode.ZERO_PAYOUT);
+    });
+
+    test('WhenClaimExceedsDeductible_Succeeds', () => {
+        const expectedPayout = validPolicy123Claim.claimAmount - policy123.deductible;
+        expect(validPolicy123Claim.claimAmount).toBeGreaterThan(policy123.deductible);
+        expect(expectedPayout).toBeLessThan(policy123.coverageLimit);
+
+        const result = evaluateClaim(validPolicy123Claim, policy123);
+
+        expect(result.approved).toBe(true);
+        expect(result.payout).toBe(expectedPayout);
+        expect(result.reasonCode).toBe(ClaimReasonCode.APPROVED);
+    });
+
+    test('WhenClaimMatchesCoverageLimit_Succeeds', () => {
+        const claimAmount = policy123.coverageLimit + policy123.deductible;
+        const claim = { ...validPolicy123Claim, claimAmount };
+        const result = evaluateClaim(claim, policy123);
+
+        expect(result.approved).toBe(true);
+        expect(result.payout).toBe(policy123.coverageLimit);
+        expect(result.reasonCode).toBe(ClaimReasonCode.APPROVED);
+    });
+
+    test('WhenClaimExceedsCoverageLimit_PayoutCapped_Succeeds', () => {
+        const claimAmount = policy123.coverageLimit + policy123.deductible + 1000;
+        const claim = { ...validPolicy123Claim, claimAmount };
+        const result = evaluateClaim(claim, policy123);
+
+        expect(result.approved).toBe(true);
+        expect(result.payout).toBe(policy123.coverageLimit);
+        expect(result.reasonCode).toBe(ClaimReasonCode.APPROVED);
+    });
 });
